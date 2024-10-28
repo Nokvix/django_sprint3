@@ -1,7 +1,7 @@
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import Http404
-from .models import Post
+from .models import Post, Category
 from django.utils import timezone
 
 
@@ -39,7 +39,17 @@ def post_detail(request, post_id):
 
 
 def category_posts(request, category_slug):
+    category = get_object_or_404(Category, slug=category_slug)
+    if not category.is_published:
+        raise Http404
+
+    post_list = (Post.objects.select_related('category', 'location')
+                 .filter(category__slug__exact=category_slug,
+                         is_published__exact=True,
+                         created_at__lt=timezone.now()))
+
     context = {
-        'category_slug': category_slug,
+        'category': category,
+        'post_list': post_list,
     }
     return render(request, 'blog/category.html', context)
