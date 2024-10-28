@@ -16,7 +16,7 @@ from django.utils import timezone
 def index(request):
     post_list = (Post.objects
                  .select_related('category', 'location')
-                 .filter(Q(created_at__lt=timezone.now())
+                 .filter(Q(pub_date__lt=timezone.now())
                          & Q(is_published__exact=True)
                          & Q(category__is_published__exact=True))
                  .order_by('-created_at')[:5])
@@ -28,12 +28,15 @@ def index(request):
 
 
 def post_detail(request, post_id):
-    post = posts_dict.get(post_id)
+    post = get_object_or_404(Post, pk=post_id)
 
-    if not post:
-        raise Http404(f'Поста с идентификатором {post_id} нет')
+    if (post.pub_date > timezone.now()
+            or not post.is_published
+            or not post.category.is_published):
+        raise Http404
+
     context = {
-        'post': post,
+        'post': post
     }
     return render(request, 'blog/detail.html', context)
 
@@ -46,7 +49,7 @@ def category_posts(request, category_slug):
     post_list = (Post.objects.select_related('category', 'location')
                  .filter(category__slug__exact=category_slug,
                          is_published__exact=True,
-                         created_at__lt=timezone.now()))
+                         pub_date__lt=timezone.now()))
 
     context = {
         'category': category,
