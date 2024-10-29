@@ -5,20 +5,16 @@ from .models import Post, Category
 from django.utils import timezone
 
 
-# posts = []
-#
-# posts_dict = {}
-# for post in posts:
-#     if post['id'] not in posts_dict:
-#         posts_dict[post['id']] = post
+def get_published_posts():
+    return (Post.objects.select_related('category', 'location')
+            .filter(Q(pub_date__lt=timezone.now())
+                    & Q(is_published__exact=True)
+                    & Q(category__is_published__exact=True)
+                    ))
 
 
 def index(request):
-    post_list = (Post.objects
-                 .select_related('category', 'location')
-                 .filter(Q(pub_date__lt=timezone.now())
-                         & Q(is_published__exact=True)
-                         & Q(category__is_published__exact=True))
+    post_list = (get_published_posts()
                  .order_by('-created_at')[:5])
 
     context = {
@@ -46,10 +42,8 @@ def category_posts(request, category_slug):
     if not category.is_published:
         raise Http404
 
-    post_list = (Post.objects.select_related('category', 'location')
-                 .filter(category__slug__exact=category_slug,
-                         is_published__exact=True,
-                         pub_date__lt=timezone.now()))
+    post_list = (get_published_posts()
+                 .filter(category__exact=category))
 
     context = {
         'category': category,
