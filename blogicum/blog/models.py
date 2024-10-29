@@ -4,15 +4,7 @@ from django.db import models
 User = get_user_model()
 
 
-class Category(models.Model):
-    title = models.CharField(verbose_name='Заголовок', max_length=256)
-    description = models.TextField(verbose_name='Описание')
-    slug = models.SlugField(
-        verbose_name='Идентификатор',
-        unique=True,
-        help_text='Идентификатор страницы для URL; '
-                  'разрешены символы латиницы, цифры, дефис и подчёркивание.'
-    )
+class BaseModel(models.Model):
     is_published = models.BooleanField(
         verbose_name='Опубликовано',
         default=True,
@@ -21,6 +13,20 @@ class Category(models.Model):
     created_at = models.DateTimeField(
         verbose_name='Добавлено',
         auto_now_add=True
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Category(BaseModel):
+    title = models.CharField(verbose_name='Заголовок', max_length=256)
+    description = models.TextField(verbose_name='Описание')
+    slug = models.SlugField(
+        verbose_name='Идентификатор',
+        unique=True,
+        help_text='Идентификатор страницы для URL; '
+                  'разрешены символы латиницы, цифры, дефис и подчёркивание.'
     )
 
     class Meta:
@@ -31,17 +37,8 @@ class Category(models.Model):
         return self.title
 
 
-class Location(models.Model):
+class Location(BaseModel):
     name = models.CharField(verbose_name='Название места', max_length=256)
-    is_published = models.BooleanField(
-        verbose_name='Опубликовано',
-        default=True,
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField(
-        verbose_name='Добавлено',
-        auto_now_add=True
-    )
 
     class Meta:
         verbose_name = 'местоположение'
@@ -51,7 +48,7 @@ class Location(models.Model):
         return self.name
 
 
-class Post(models.Model):
+class Post(BaseModel):
     title = models.CharField(verbose_name='Заголовок', max_length=256)
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
@@ -76,15 +73,6 @@ class Post(models.Model):
         verbose_name='Категория',
         on_delete=models.SET_NULL,
         null=True
-    )
-    is_published = models.BooleanField(
-        verbose_name='Опубликовано',
-        default=True,
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField(
-        verbose_name='Добавлено',
-        auto_now_add=True
     )
 
     class Meta:
